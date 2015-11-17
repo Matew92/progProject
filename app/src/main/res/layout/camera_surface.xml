@@ -12,14 +12,6 @@
 
 
 
-    <ImageView
-        android:layout_marginTop="16dp"
-        android:layout_marginLeft="5dp"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:id="@+id/imageText"
-        android:src="@drawable/text"
-        />
 
     <ImageView
         android:layout_marginTop="16dp"
@@ -28,7 +20,6 @@
         android:layout_height="60dp"
         android:id="@+id/imagePicture"
         android:src="@drawable/picture"
-        android:layout_below="@+id/imageText"
         />
 
 
@@ -56,7 +47,6 @@
             android:id="@+id/cirlclesList"
             android:layout_width="fill_parent"
             android:layout_height="60dp"
-            android:layout_marginTop="5dp"
             android:layout_marginLeft="10dp"
             android:layout_toRightOf="@+id/imagePalette"
             android:orientation="horizontal">

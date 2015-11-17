@@ -17,10 +17,8 @@ import android.graphics.ImageFormat;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.ShapeDrawable;
@@ -29,10 +27,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -56,9 +56,9 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
     private Camera mCamera;
 
     ImageView palette;
-    ImageView text;
     ImageView image;
     LinearLayout circleList;
+    Integer selectPalette;
 
     Boolean setCircleVisible = false;
 
@@ -147,13 +147,7 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
-        paint.setColor(Color.RED);
-        paint.setStyle(Paint.Style.FILL);
-
-        
-
         palette = (ImageView) findViewById(R.id.imagePalette);
-        text = (ImageView) findViewById(R.id.imageText);
         image = (ImageView) findViewById(R.id.imagePicture);
         circleList = (LinearLayout) findViewById(R.id.cirlclesList);
 
@@ -163,24 +157,39 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
         circleList.animate()
                 .alpha(1.0f);
 
-        final int[] rainbow = getResources().getIntArray(R.array.rainbow);
+        circleList.animate()
+                .alpha(0.0f)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        circleList.setVisibility(View.GONE);
+                        palette.animate().translationY(0);
 
+                    }
+                });
+        setCircleVisible = true;
+
+        final int[] rainbow = getResources().getIntArray(R.array.rainbow);
 
         Integer countChild = circleList.getChildCount();
         Log.d("Circlelist element", countChild.toString());
 
         for(int i = 0; i<circleList.getChildCount(); i++){
             View circle = circleList.getChildAt(i);
-            //Integer backgroundColor = Color.parseColor(colorsTxt[i]);
 
             circle.setId(i);
+
+
+            if(i == 0){
+                String hexColor = String.format("#%06X", (0xFFFFFF & rainbow[i]));
+                ((ProjApp) getApplication()).setSelectedColor(hexColor);
+                selectPalette=i;
+
+            }else{
+                circle.animate().translationY(40);
+            }
             Drawable background = circle.getBackground();
-
-
-            //circle.getBackground().setColorFilter(0xff888888, PorterDuff.Mode.MULTIPLY);
-
-
-            //Log.d("Circlelist element",background.toString());
 
             if (background instanceof ShapeDrawable) {
                 // cast to 'ShapeDrawable'
@@ -194,45 +203,26 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
 
 
             circle.setOnClickListener(new View.OnClickListener() {
+              @Override
+              public void onClick(final View view) {
+                  Integer colorSelcet = rainbow[view.getId()];
 
+                  View exView = circleList.getChildAt(selectPalette);
 
-                @Override
-                public void onClick(View view) {
+                  exView.animate().translationY(40);
+                  String hexColor = String.format("#%06X", (0xFFFFFF & colorSelcet));
 
-                    /*Integer selectColor = ((ColorDrawable) view.getBackground()).getColor();
-                    Log.i(TAG+" CL", selectColor.toString());*/
+                  view.animate().translationY(0);
+                  selectPalette = view.getId();
 
-                    Integer color = view.getSolidColor();
-                    Log.i(TAG + "color", color.toString());
-
-                    Integer colorSelcet =  rainbow[view.getId()];
-
-                    String hexColor = String.format("#%06X", (0xFFFFFF & colorSelcet));
-                    Log.i(TAG + "color", hexColor);
-
-                    ((ProjApp) getApplication()).setSelectedColor(hexColor);
-
-                    /*if (circleBackground instanceof ColorDrawable) {
-                        // cast to 'ShapeDrawable'
-                        Integer color = ((ColorDrawable) circleBackground).getColor();
-
-
-
-                    }*/
-
-
-
-
-
-
-                }
-            });
-
-
+                  ((ProjApp) getApplication()).setSelectedColor(hexColor);
+              }
+          });
         }
 
 
 
+        palette.animate().translationY(40);
         palette.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -241,12 +231,14 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
 
 
                     circleList.setVisibility(View.VISIBLE);
+                    palette.animate().translationY(40);
                     circleList.animate()
                             .alpha(1.0f)
                             .setListener(new AnimatorListenerAdapter() {
                                 @Override
                                 public void onAnimationEnd(Animator animation) {
                                     super.onAnimationEnd(animation);
+
 
 
                                 }
@@ -262,6 +254,7 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
                                 public void onAnimationEnd(Animator animation) {
                                     super.onAnimationEnd(animation);
                                     circleList.setVisibility(View.GONE);
+                                    palette.animate().translationY(0);
 
                                 }
                             });
@@ -271,12 +264,6 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
             }
         });
 
-        text.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-            }
-        });
 
         image.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -338,9 +325,6 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
             json.addProperty("x", x.toString());
             json.addProperty("y", y.toString());
             json.addProperty("action", jsonGesture.toString());
-
-
-
 
             Ion.with(getApplicationContext())
                     .load(Server+"/gesture")
@@ -434,8 +418,6 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
             mCamera.setPreviewDisplay(holder);
             mCamera.startPreview();
 
-
-
         } catch (Exception e) {
             // check for exceptions
             System.err.println(e);
@@ -523,15 +505,6 @@ public class CameraPreview extends Activity implements SurfaceHolder.Callback {
 
 
                     byte[] jdata = baos.toByteArray();
-
-                    //Bitmap bitmap = BitmapFactory.decodeByteArray(jdata,0,jdata.length);
-                    //imageEncoded[0] = Base64.encodeToString(bytes, Base64.DEFAULT);
-                    //Log.i(TAG + " refresh", imageEncoded + "\n");
-                    //Bitmap bitmap = BitmapFactory.decodeByteArray(jdata, 0, jdata.length);
-                    //byte[] b = blob.toByteArray();
-                    //String data_string = Base64.encodeToString(b, Base64.DEFAULT);
-                    //Log.i(TAG + " refresh", data_string + "\n");
-
                     File f = new File(getApplicationContext().getCacheDir(), "temp.jpg");
                     try {
                         FileOutputStream fos = new FileOutputStream(f);
